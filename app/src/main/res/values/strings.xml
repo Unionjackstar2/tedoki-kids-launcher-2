@@ -1,0 +1,180 @@
+<resources>
+    <string name="app_name">TEDOKI kids</string>
+    
+    <!-- Parent Setup -->
+    <string name="setup_title">This launcher must be set up by a parent</string>
+    <string name="setup_subtitle">Only a parent or caregiver should configure this simplified experience for a child.</string>
+    <string name="setup_connect_google">Connect with Google Account</string>
+    <string name="setup_connected_status">Parent account connected. You can now set up the simplified mode.</string>
+    <string name="setup_family_link_tip">You can also use Google Family Link together with this launcher for stronger parental controls.</string>
+    <string name="layout_style_title">Layout Style</string>
+    <string name="layout_grid">Grid</string>
+    <string name="layout_grid_desc">Large tiles side by side</string>
+    <string name="layout_rows">Rows</string>
+    <string name="layout_rows_desc">Full-width list with large text</string>
+    <string name="setup_buttons_title">Home Screen Buttons (Up to 6)</string>
+    <string name="setup_buttons_subtitle">Configure what appears on the simplified screen</string>
+    <string name="setup_pin_title">Set Parent PIN</string>
+    <string name="setup_pin_desc">4 to 6 digits required to exit simplified mode or change settings.</string>
+    <string name="setup_pin_placeholder">Enter 4–6 digit PIN</string>
+    <string name="setup_pin_confirm_placeholder">Confirm PIN</string>
+    <string name="setup_complete_button">Enter Simplified Mode</string>
+    <string name="pin_error_min_digits">PIN must be at least 4 digits</string>
+    <string name="pin_error_mismatch">PINs do not match</string>
+    <string name="parent_account_default">Parent / Caregiver</string>
+    <string name="pin_change_label">4–6 digit PIN</string>
+    
+    <!-- Navigation -->
+    <string name="nav_back">Back</string>
+    
+    <!-- Buttons & Apps -->
+    <string name="btn_camera">Camera</string>
+    <string name="btn_photos">Photos</string>
+    <string name="btn_call_mom">Mom</string>
+    <string name="btn_call_dad">Dad</string>
+    <string name="btn_call_custom">Call</string>
+    <string name="phone">Phone</string>
+    
+    <!-- Camera -->
+    <string name="camera_photo">Photo</string>
+    <string name="camera_selfie">Selfie</string>
+    <string name="camera_photo_saved">Photo saved!</string>
+    <string name="camera_permission_required">Camera permission is required to take photos.</string>
+    <string name="grant_permission">Grant Permission</string>
+    
+    <!-- Call -->
+    <string name="calling">Calling</string>
+    <string name="call_connecting">Connecting…</string>
+    <string name="call_connected">Connected</string>
+    <string name="call_mute">Mute</string>
+    <string name="call_speaker">Speaker</string>
+    <string name="call_ended">Call Ended</string>
+    <string name="end_call">End Call</string>
+    <string name="accept_call">Accept</string>
+    <string name="decline_call">Decline</string>
+    <string name="incoming_call">Incoming Call</string>
+    <string name="sos_call_in_progress">Emergency call in progress…</string>
+    <string name="sos_call_connected">Emergency call connected</string>
+    <string name="sos_sms_confirmed_title">Google Maps link sent via SMS!</string>
+    <string name="sos_sms_confirmed_desc">Location was sent via SMS to %1$s (%2$s).</string>
+    
+    <!-- Photos -->
+    <string name="photos_title">Photos</string>
+    <string name="photos_empty">No photos taken yet</string>
+    <string name="photos_empty_hint">Photos taken with the Camera will appear here</string>
+    
+    <!-- PIN Dialog & Settings -->
+    <string name="parent_access">Parent Access</string>
+    <string name="enter_pin">Enter Parent PIN</string>
+    <string name="incorrect_pin">Incorrect PIN. Try again.</string>
+    <string name="settings_title">Parent Settings</string>
+    <string name="settings_exit_to_home">Return to Simplified Mode</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_default_launcher">Set as Default Launcher</string>
+    <string name="settings_default_launcher_desc">Choose this app when pressing the device home button</string>
+    <string name="settings_edit_buttons">Configure Buttons</string>
+    <string name="settings_change_pin">Change Parent PIN</string>
+    <string name="settings_parent_account">Connected Account</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="add_button">Add Button</string>
+    <string name="contact_name">Name / Label</string>
+    <string name="contact_phone">Phone Number</string>
+    <string name="choose_photo">Choose Photo</string>
+    
+    <!-- SOS Emergency -->
+    <string name="sos_button_title">SOS EMERGENCY</string>
+    <string name="sos_hold_instruction">Hold for 3 seconds</string>
+    <string name="sos_holding">Keep holding...</string>
+    <string name="sos_triggered_title">EMERGENCY SOS ACTIVE</string>
+    <string name="sos_calling_contact">Calling emergency number</string>
+    <string name="sos_location_title">Your Current Location</string>
+    <string name="sos_location_sending">Acquiring GPS location &amp; sending SMS…</string>
+    <string name="sos_location_sent">Location sent via SMS</string>
+    <string name="sos_location_unavailable">Acquiring GPS location…</string>
+    <string name="sos_open_maps">Open in Google Maps</string>
+    <string name="sos_cancel">End SOS / Cancel</string>
+    <string name="sos_redial">Call Again</string>
+    <string name="settings_emergency_contact">Emergency Contact</string>
+    <string name="settings_emergency_number">Emergency Phone Number</string>
+    <string name="settings_emergency_number_desc">Called when SOS is held for 3s, receives your location via SMS.</string>
+    
+    <!-- App Picker -->
+    <string name="add_app_title">Select Installed App</string>
+    <string name="add_app_subtitle">Choose an app to add to the home screen</string>
+    <string name="add_contact_option">Phone Contact</string>
+    <string name="add_app_option">Installed App</string>
+    <string name="search_apps">Search apps…</string>
+    <string name="no_apps_found">No apps found</string>
+    <string name="max_buttons_reached">Maximum of 6 buttons reached</string>
+    <string name="app_not_installed">App is not installed on this device</string>
+
+    <!-- New Toggles -->
+    <string name="settings_sos_toggle_title">Show SOS Emergency Button</string>
+    <string name="settings_sos_toggle_desc">Display the red SOS button on the bottom of the home screen</string>
+    <string name="settings_clock_click_title">Clock Opens Alarm App</string>
+    <string name="settings_clock_click_desc">Tapping the clock opens the system clock / alarm app</string>
+    <string name="settings_calendar_click_title">Date Opens Calendar App</string>
+    <string name="settings_calendar_click_desc">Tapping the date opens the system calendar app</string>
+    <string name="clock_app_not_found">No clock or alarm app found on device</string>
+    <string name="calendar_app_not_found">No calendar app found on device</string>
+
+    <!-- Dedicated SOS Submenu -->
+    <string name="emergency_submenu_title">Emergency SOS Settings</string>
+    <string name="emergency_submenu_desc">Configure emergency contact, 3s button, and location SMS</string>
+    <string name="send_location_sms_title">Send Location via SMS</string>
+    <string name="send_location_sms_desc">When SOS is held, your GPS coordinates are sent to the emergency contact as a Google Maps link.</string>
+    <string name="location_permission_granted">Permissions granted (Location &amp; SMS)</string>
+    <string name="request_permissions_btn">Grant Location &amp; SMS Permissions</string>
+    <string name="emergency_sms_preview_title">SMS Message Preview</string>
+    <string name="emergency_sms_preview_sample">🚨 EMERGENCY SOS! I need help! My location: https://maps.google.com/?q=52.5200,13.4050</string>
+
+    <!-- Kid Browser ("Surfen") -->
+    <string name="btn_browser">Surfen</string>
+    <string name="browser_title">Surfen</string>
+    <string name="browser_home">Home</string>
+    <string name="browser_back">Back</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_close">Close</string>
+    <string name="browser_bookmarks_title">My Kids Websites</string>
+    <string name="browser_bookmarks_subtitle">Tap a website to explore safely</string>
+    <string name="browser_blocked_title">Stop! Website not allowed</string>
+    <string name="browser_blocked_desc">This website has not been enabled by your parents yet.</string>
+    <string name="browser_blocked_help">Ask your parents to enable this website in the settings.</string>
+    <string name="browser_blocked_back_home">Back to Safe Home</string>
+    <string name="browser_settings_title">Kid Browser &amp; Websites (Surfen)</string>
+    <string name="browser_settings_desc">Manage whitelist and approve kid-safe websites</string>
+    <string name="browser_settings_toggle_homescreen">Show on Home Screen</string>
+    <string name="browser_settings_toggle_homescreen_desc">Place the large \"Surfen\" tile on the child home screen</string>
+    <string name="browser_settings_allowed_list">Approved Websites</string>
+    <string name="browser_settings_recommendations">1-Click Kid Safe Recommendations</string>
+    <string name="browser_settings_add_custom">Add Custom Website</string>
+    <string name="browser_settings_site_name">Website Name</string>
+    <string name="browser_settings_site_url">Web Address (e.g. kika.de)</string>
+    <string name="browser_settings_add_btn">Approve Website</string>
+    <string name="browser_settings_already_added">Already Added</string>
+    <string name="browser_settings_no_sites">No websites added yet. Add recommendations below!</string>
+    <string name="add_browser_option">Kid Browser (Surfen)</string>
+
+    <!-- Parent PIN Submenu -->
+    <string name="settings_pin_submenu_title">Parent PIN &amp; Security</string>
+    <string name="settings_pin_submenu_desc">Change security PIN (masked with eye toggle)</string>
+    <string name="pin_current_label">Current PIN</string>
+    <string name="pin_new_label">New PIN (4–6 digits)</string>
+    <string name="pin_confirm_label">Confirm New PIN</string>
+    <string name="pin_save_btn">Save New PIN</string>
+    <string name="pin_error_current_wrong">The current PIN is incorrect</string>
+    <string name="pin_error_too_short">The new PIN must be at least 4 digits</string>
+    <string name="pin_saved_success">Parent PIN updated successfully!</string>
+    <string name="pin_visibility_toggle">Toggle PIN visibility</string>
+    <string name="pin_status_active">Security PIN Active</string>
+
+    <!-- Theme & Appearance -->
+    <string name="settings_appearance_title">Appearance &amp; Theme</string>
+    <string name="settings_appearance_desc">Choose light, dark, or automatic system appearance</string>
+    <string name="theme_mode_system">Auto (System)</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+</resources>
