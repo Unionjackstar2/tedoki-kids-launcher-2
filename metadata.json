@@ -1,6 +1,0 @@
-{
-  "name": "TEDOKI kids",
-  "description": "A calm, simplified kids and senior launcher inspired by iOS Assistive Access, featuring large buttons, CameraX, quick calling, photos, and parent PIN protection in English and German.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
