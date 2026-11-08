@@ -26,6 +26,29 @@ jobs:
       - name: Code auschecken
         uses: actions/checkout@v4
 
+      # Findet den Projektordner automatisch – egal ob die Gradle-Dateien im Repo-Hauptordner
+      # oder in einem Unterordner (z. B. tedoki-kids-launcher-2-main/) liegen
+      - name: Projektordner suchen
+        run: |
+          SETTINGS=$(find . -maxdepth 3 -name "settings.gradle.kts" -not -path "*/node_modules/*" | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "::error::Keine settings.gradle.kts im Repo gefunden – wurden die Gradle-Dateien hochgeladen?"
+            echo "Inhalt des Repos:"; find . -maxdepth 2 -not -path "./.git*" | sort
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "Projektordner: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Secrets prüfen
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          [ -n "$KEYSTORE_BASE64" ]   && echo "KEYSTORE_BASE64: vorhanden"   || echo "::warning::KEYSTORE_BASE64 fehlt"
+          [ -n "$KEYSTORE_PASSWORD" ] && echo "KEYSTORE_PASSWORD: vorhanden" || echo "::error::KEYSTORE_PASSWORD fehlt oder ist leer"
+          if [ -n "$KEYSTORE_BASE64" ] && [ -z "$KEYSTORE_PASSWORD" ]; then exit 1; fi
+
       - name: JDK 17 einrichten
         uses: actions/setup-java@v4
         with:
@@ -33,18 +56,8 @@ jobs:
           java-version: '17'
 
       - name: Android SDK einrichten
-        uses: android-actions/setup-android@v3.2.1
-        with:
-          accept-android-sdk-licenses: true
-          packages: platform-tools
+        uses: android-actions/setup-android@v3
 
-      - name: Android SDK Plattformen installieren
-        run: |
-          sdkmanager --install \
-            "platforms;android-36" \
-            "build-tools;36.0.0" \
-            "platform-tools"
-            
       # Im Repo liegt kein Gradle-Wrapper – Gradle wird hier passend zu AGP 9.1 installiert
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
@@ -68,12 +81,13 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        working-directory: ${{ env.PROJECT_DIR }}
         run: gradle --no-daemon --stacktrace :app:assembleRelease
 
       - name: APK umbenennen
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/release/*.apk "out/TEDOKI-kids-${VERSION_NAME}.apk"
+          cp "$PROJECT_DIR"/app/build/outputs/apk/release/*.apk "out/TEDOKI-kids-${VERSION_NAME}.apk"
           ls -la out
 
       - name: APK hochladen
