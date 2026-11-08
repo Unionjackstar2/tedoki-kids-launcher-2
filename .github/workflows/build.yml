@@ -35,7 +35,18 @@ jobs:
       - name: Android SDK einrichten
         uses: android-actions/setup-android@v3.2.1
         with:
-          cmdline-tools-version: "latest"
+          accept-android-sdk-licenses: true
+          packages: platform-tools
+
+      - name: Android SDK Plattformen installieren
+        run: |
+          sdkmanager --install \
+            "platforms;android-35" \
+            "platforms;android-36" \
+            "platforms;android-37" \
+            "build-tools;36.0.0" \
+            "platform-tools"
+            
       # Im Repo liegt kein Gradle-Wrapper – Gradle wird hier passend zu AGP 9.1 installiert
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
