@@ -1,103 +1,95 @@
-name: APK bauen
+name: Build APK
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    timeout-minutes: 45
 
-      - name: Neueste ELdoroado-ZIP finden und entpacken
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      # Findet den Ordner mit settings.gradle.kts – auch wenn das Projekt
+      # versehentlich in einem Unterordner gelandet ist.
+      - name: Projektordner finden
         run: |
-          ZIP=""
-          NEWEST=0
-          while IFS= read -r f; do
-            t=$(git log -1 --format=%ct -- "$f")
-            t=${t:-0}
-            if [ "$t" -ge "$NEWEST" ]; then NEWEST=$t; ZIP="$f"; fi
-          done < <(find . -path ./.git -prune -o -iname 'tedoki-kids*.zip' -print)
-          if [ -z "$ZIP" ]; then
-            echo "::error::Keine tedoki-kids*.zip im Repository gefunden"
+          echo "Inhalt des Repos:"; ls -la
+          SETTINGS=$(find . -maxdepth 3 -name settings.gradle.kts -not -path "*/node_modules/*" | head -n1)
+          if [ -z "$SETTINGS" ]; then
+            echo "::error::Keine settings.gradle.kts im Repo gefunden – wurden alle Dateien hochgeladen?"
             exit 1
           fi
-          echo "Verwende $ZIP"
-          # ZIP mit „beta“ im Namen → Beta-App mit eigener Paketkennung und eigenem Release
-          case "$(basename "$ZIP" | tr '[:upper:]' '[:lower:]')" in
-            *beta*) echo "BETA=true" >> "$GITHUB_ENV"; echo "Baue Beta-Fassung" ;;
-            *) echo "BETA=false" >> "$GITHUB_ENV" ;;
-          esac
-          unzip -o -q "$ZIP" -d _src
-          cp -r _src/tedoki-kids-launcher-2-main/. .
-          rm -rf _src
+          PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "Projektordner: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-java@v4
+      - name: Java 17 einrichten
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
 
-      - name: Release-Schlüssel einrichten (falls als Secret hinterlegt)
-        env:
-          KS: ${{ secrets.KEYSTORE_BASE64 }}
-          KP: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          if [ -n "$KS" ] && [ -n "$KP" ]; then
-            echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "EVR_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-            echo "EVR_KEYSTORE_PASSWORD=$KP" >> "$GITHUB_ENV"
-            echo "Signiere mit Release-Schlüssel"
-          else
-            echo "Kein Release-Schlüssel hinterlegt, Debug-Schlüssel wird verwendet"
-          fi
-
-      - name: NDK und CMake für den KI-Assistenten installieren
-        run: |
-          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          yes | "$SDKM" --licenses > /dev/null || true
-          "$SDKM" "ndk;29.0.14206865" "cmake;3.22.1" > /dev/null
-          echo "NDK und CMake bereit"
-
-      - name: Setup Gradle
+      - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
+      # Das Android SDK ist auf den GitHub-Runnern schon vorinstalliert.
+      # Fehlende Teile (z. B. Plattform 36.1) laedt Gradle beim Build selbst nach.
+      - name: Android-SDK-Lizenzen bestaetigen
+        run: |
+          SDKMANAGER=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -n1)
+          echo "Verwende $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+
+      - name: Release-Schlüssel vorbereiten
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::Kein KEYSTORE_BASE64-Secret – APK wird mit Debug-Schlüssel signiert."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          # Alias automatisch ermitteln, falls kein KEY_ALIAS-Secret gesetzt ist
+          if [ -z "$KEY_ALIAS" ]; then
+            KEY_ALIAS=$(keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$KEYSTORE_PASSWORD" 2>/dev/null \
+              | grep -iE "PrivateKeyEntry" | head -n1 | cut -d',' -f1)
+          fi
+          if [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Konnte den Schlüssel-Alias nicht lesen – Passwort prüfen oder KEY_ALIAS-Secret anlegen."
+            exit 1
+          fi
+          {
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "KEY_ALIAS=$KEY_ALIAS"
+            echo "KEY_PASSWORD=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } >> "$GITHUB_ENV"
+          echo "Schlüssel-Alias: $KEY_ALIAS"
+
       - name: APK bauen
-        run: gradle testDebugUnitTest assembleDebug -Pbeta=$BETA --stacktrace
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: gradle -p "$PROJECT_DIR" :app:assembleRelease --no-configuration-cache --stacktrace
 
       - name: APK umbenennen
-        run: cp app/build/outputs/apk/debug/app-debug.apk TedokiKidsLauncher.apk
-
-      - name: Signatur der APK anzeigen
         run: |
-          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/apksigner" verify --print-certs TedokiKidsLauncher.apk | grep -i "SHA-256" || true
+          mkdir -p out
+          cp "$PROJECT_DIR"/app/build/outputs/apk/release/*.apk "out/TEDOKI-Mixtape-1.0-build${{ github.run_number }}.apk"
+          ls -la out
 
-      - uses: actions/upload-artifact@v4
+      - name: APK hochladen
+        uses: actions/upload-artifact@v4
         with:
-          name: TedokiKidsLauncher-apk
-          path: TedokiKidsLauncher.apk
-
-      - name: Als Release veröffentlichen
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "$BETA" = "true" ]; then
-            cp TedokiKidsLauncher.apk TedokiKidsLauncher-Beta.apk
-            gh release delete beta --yes --cleanup-tag || true
-            gh release create beta TedokiKidsLauncher-Beta.apk --target "${{ github.sha }}" --prerelease \
-              --title "TedokiKidsLauncher Beta – neuester Test-Build" --notes "Beta, läuft neben der normalen App. Gebaut aus ${{ github.sha }}"
-          else
-            gh release delete latest --yes --cleanup-tag || true
-            gh release create latest TedokiKidsLauncher.apk --target "${{ github.sha }}" \
-              --title "TedokiKidsLauncher – neuester Build" --notes "Automatisch gebaut aus ${{ github.sha }}"
-          fi
+          name: TEDOKI-Mixtape-build${{ github.run_number }}
+          path: out/*.apk
+          if-no-files-found: error
