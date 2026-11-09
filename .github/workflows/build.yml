@@ -70,8 +70,8 @@ jobs:
 
       - name: Release-Keystore wiederherstellen
         env:
-          KS_B64: ${{ secrets.KEYSTORE_BASE64 || secrets.EVR_KEYSTORE_BASE64 || secrets.KEYSTORE }}
-          KS_PW: ${{ secrets.KEYSTORE_PASSWORD || secrets.EVR_KEYSTORE_PASSWORD || secrets.KEY_PASSWORD }}
+          KS_B64: ${{ secrets.EVR_KEYSTORE_BASE64 || secrets.KEYSTORE_BASE64 || secrets.KEYSTORE }}
+          KS_PW: ${{ secrets.EVR_KEYSTORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}
         run: |
           if [ -z "$KS_B64" ]; then
             echo "::warning::Kein Keystore-Secret gefunden – APK wird mit Debug-Schlüssel signiert."
@@ -83,14 +83,12 @@ jobs:
           fi
           echo "$KS_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-          echo "Keystore wiederhergestellt."
+          echo "Keystore wiederhergestellt ($(stat -c %s "$RUNNER_TEMP/release.jks") Bytes)."
 
       - name: APK bauen
         working-directory: ${{ env.PROJECT_DIR }}
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || secrets.EVR_KEYSTORE_PASSWORD || secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.EVR_KEYSTORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}
         run: gradle --no-daemon --stacktrace :app:assembleRelease
 
       - name: APK umbenennen
