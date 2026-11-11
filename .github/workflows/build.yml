@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
   workflow_dispatch:
 
@@ -108,15 +108,26 @@ jobs:
             exit 1
           fi
           echo "Keystore-Datei: $(stat -c%s "$KS") Bytes"
-          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/ks.txt" 2>&1; then
+          # Häufigster Fehler: beim Einfügen des Passworts ist ein Leerzeichen/Zeilenumbruch mitgerutscht.
+          # Gradle entfernt so etwas ebenfalls automatisch (siehe app/build.gradle.kts).
+          PW=$(printf '%s' "$KEYSTORE_PASSWORD" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '\r\n')
+          if [ "$PW" != "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Im Secret KEYSTORE_PASSWORD war ein Leerzeichen oder Zeilenumbruch am Anfang/Ende – wurde entfernt."
+          fi
+          # Hilfe zur Fehlersuche – verrät weder Passwort noch Schlüssel:
+          echo "Prüfsumme der Keystore-Datei (SHA-256): $(sha256sum "$KS" | cut -d' ' -f1)"
+          echo "Länge des Passworts aus KEYSTORE_PASSWORD: ${#PW} Zeichen"
+          echo "Dateityp: $(head -c 4 "$KS" | od -An -tx1 | tr -d ' ') (feedfeed = JKS, 3082… = PKCS12)"
+          if ! keytool -list -keystore "$KS" -storepass "$PW" > "$RUNNER_TEMP/ks.txt" 2>&1; then
             echo "::error::Der Keystore lässt sich nicht öffnen. Entweder ist KEYSTORE_BASE64 beschädigt/unvollständig oder KEYSTORE_PASSWORD falsch."
             sed 's/^/  /' "$RUNNER_TEMP/ks.txt" | head -n 5
             echo "So legst du KEYSTORE_BASE64 neu an (Linux/VPS):  base64 -w0 release.jks   → Ausgabe komplett als Secret einfügen"
             echo "Windows PowerShell:  [Convert]::ToBase64String([IO.File]::ReadAllBytes(\"release.jks\")) | Set-Clipboard"
             exit 1
           fi
-          ALIASES=$(keytool -list -v -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" 2>/dev/null | sed -n 's/^Alias name: //p')
+          ALIASES=$(keytool -list -v -keystore "$KS" -storepass "$PW" 2>/dev/null | sed -n 's/^Alias name: //p')
           echo "Schlüssel im Keystore: $(echo "$ALIASES" | wc -l)"
+          KEY_ALIAS=$(printf '%s' "$KEY_ALIAS" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '\r\n')
           if [ -n "$KEY_ALIAS" ] && ! echo "$ALIASES" | grep -qx "$KEY_ALIAS"; then
             echo "::error::Das Secret KEY_ALIAS passt zu keinem Schlüssel im Keystore. Vorhandene Namen:"
             echo "$ALIASES" | sed 's/^/  - /'
@@ -151,10 +162,11 @@ jobs:
       # Release für Obtainium: Jeder Push auf main erzeugt ein Release mit der APK.
       # Obtainium erkennt neue Versionen am Tag (v0.5.<Build-Nummer>) und installiert
       # wie ein App-Store – dadurch greift Androids Sperre für SMS/Telefon nicht.
-      # Pull Requests und manuelle Testläufe erzeugen kein Release.
+      # Pull Requests erzeugen kein Release.
       # ---------------------------------------------------------------------------
       - name: GitHub-Release für Obtainium anlegen
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # Bei jedem Push UND bei "Run workflow" von Hand – aber nur auf dem Hauptzweig, nie bei Pull Requests
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION_NAME }}
