@@ -90,17 +90,41 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Release-Keystore aus Secret wiederherstellen
+      # Keystore aus dem Secret wiederherstellen UND prüfen, bevor 3 Minuten gebaut wird.
+      # Entfernt dabei Zeilenumbrüche und "-----BEGIN/END-----"-Zeilen (z. B. von Windows certutil).
+      - name: Release-Keystore aus Secret wiederherstellen und prüfen
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
-            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-            echo "Release-Keystore gefunden."
-          else
+          if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::Kein KEYSTORE_BASE64-Secret – APK wird mit Debug-Schlüssel signiert."
+            exit 0
           fi
+          KS="$RUNNER_TEMP/release.jks"
+          if ! printf '%s' "$KEYSTORE_BASE64" | sed 's/-----[A-Z ]*-----//g' | tr -d ' \r\n\t' | base64 --decode > "$KS"; then
+            echo "::error::KEYSTORE_BASE64 ist kein gültiger Base64-Text. Bitte das Secret neu anlegen (Anleitung in der Fehlermeldung unten)."
+            exit 1
+          fi
+          echo "Keystore-Datei: $(stat -c%s "$KS") Bytes"
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/ks.txt" 2>&1; then
+            echo "::error::Der Keystore lässt sich nicht öffnen. Entweder ist KEYSTORE_BASE64 beschädigt/unvollständig oder KEYSTORE_PASSWORD falsch."
+            sed 's/^/  /' "$RUNNER_TEMP/ks.txt" | head -n 5
+            echo "So legst du KEYSTORE_BASE64 neu an (Linux/VPS):  base64 -w0 release.jks   → Ausgabe komplett als Secret einfügen"
+            echo "Windows PowerShell:  [Convert]::ToBase64String([IO.File]::ReadAllBytes(\"release.jks\")) | Set-Clipboard"
+            exit 1
+          fi
+          ALIASES=$(keytool -list -v -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" 2>/dev/null | sed -n 's/^Alias name: //p')
+          echo "Schlüssel im Keystore: $(echo "$ALIASES" | wc -l)"
+          if [ -n "$KEY_ALIAS" ] && ! echo "$ALIASES" | grep -qx "$KEY_ALIAS"; then
+            echo "::error::Das Secret KEY_ALIAS passt zu keinem Schlüssel im Keystore. Vorhandene Namen:"
+            echo "$ALIASES" | sed 's/^/  - /'
+            echo "Tipp: Secret KEY_ALIAS löschen – dann nimmt der Build automatisch den ersten Schlüssel."
+            exit 1
+          fi
+          echo "KEYSTORE_PATH=$KS" >> "$GITHUB_ENV"
+          echo "Keystore ist in Ordnung."
 
       - name: Release-APK bauen
         env:
