@@ -67,8 +67,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Android SDK einrichten
-        uses: android-actions/setup-android@v3
+      # Das Android SDK ist auf den GitHub-Runnern schon vorinstalliert.
+      # Die frühere Aktion "android-actions/setup-android" ist dabei gerade fehlgeschlagen
+      # (sdkmanager exit code 1) – deshalb nutzen wir direkt das vorhandene SDK.
+      # Fehlende Teile (z. B. Android 36) lädt Gradle beim Bauen selbst nach.
+      - name: Android SDK vorbereiten
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          SDKMANAGER=$(ls -d "$SDK"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | sort -V | tail -n 1)
+          echo "SDK: $SDK"
+          echo "sdkmanager: ${SDKMANAGER:-nicht gefunden}"
+          if [ -n "$SDKMANAGER" ]; then
+            # Lizenzen bestätigen, damit Gradle fehlende Teile laden darf (Fehler hier sind nicht schlimm)
+            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          fi
 
       # Im Repo liegt kein Gradle-Wrapper – Gradle wird hier passend zu AGP 9.1 installiert
       - name: Gradle einrichten
