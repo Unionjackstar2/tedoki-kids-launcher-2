@@ -26,6 +26,18 @@ jobs:
       - name: Code auschecken
         uses: actions/checkout@v4
 
+      # Falls das Projekt als ZIP hochgeladen wurde: hier entpacken.
+      # (GitHub selbst entpackt keine ZIP-Dateien.)
+      - name: Hochgeladene ZIP entpacken (falls vorhanden)
+        run: |
+          ZIP=$(find . -maxdepth 2 -name "*.zip" -not -path "./.git/*" | head -n 1)
+          if [ -n "$ZIP" ]; then
+            echo "ZIP gefunden: $ZIP – wird entpackt"
+            unzip -q -o "$ZIP" -d .
+          else
+            echo "Keine ZIP-Datei – Projekt liegt schon entpackt im Repo."
+          fi
+
       # Findet den Projektordner automatisch – egal ob die Gradle-Dateien im Repo-Hauptordner
       # oder in einem Unterordner (z. B. tedoki-kids-launcher-2-main/) liegen
       - name: Projektordner suchen
